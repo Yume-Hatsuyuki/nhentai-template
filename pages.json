@@ -1,0 +1,7 @@
+{
+  "field": "pages",
+  "label": "页数",
+  "type": "string",
+  "placeholder": "例如: >100, <50, =200",
+  "items": []
+}

@@ -1,0 +1,6 @@
+{
+  "field": "jtitle",
+  "label": "日文标题搜索",
+  "type": "string",
+  "items": []
+}

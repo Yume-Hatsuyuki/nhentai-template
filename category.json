@@ -1,0 +1,6 @@
+{
+  "field": "category",
+  "label": "分类",
+  "type": "string",
+  "items": []
+}

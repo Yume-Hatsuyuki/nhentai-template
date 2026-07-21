@@ -1,0 +1,7 @@
+{
+  "field": "uploaded",
+  "label": "上传时间",
+  "type": "string",
+  "placeholder": "例如: >7d, <30d, =2026-01-01",
+  "items": []
+}

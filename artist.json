@@ -1,0 +1,6 @@
+{
+  "field": "artist",
+  "label": "作者",
+  "type": "string",
+  "items": []
+}

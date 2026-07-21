@@ -1,0 +1,6 @@
+{
+  "field": "parody",
+  "label": "原作",
+  "type": "string",
+  "items": []
+}

@@ -1,0 +1,7 @@
+{
+  "field": "favorites",
+  "label": "收藏数",
+  "type": "string",
+  "placeholder": "例如: >5000, <1000",
+  "items": []
+}

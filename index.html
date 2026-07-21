@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Nhentai 查询配置器</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #d1d1d1;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        h1 {
+            font-size: 22px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .result-area {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        textarea#search_result {
+            width: 100%;
+            height: 80px;
+            background-color: #0f0f0f;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+        .btn {
+            background-color: #333;
+            color: #eee;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background-color: #555;
+        }
+        .btn-primary {
+            background-color: #0056b3;
+        }
+        .btn-primary:hover {
+            background-color: #007bff;
+        }
+        .btn-danger {
+            background-color: #8f1616;
+        }
+        .btn-danger:hover {
+            background-color: #b32020;
+        }
+        .field-group {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .field-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .field-title h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .preset-btn {
+            background-color: #2a2a2a;
+            color: #d1d1d1;
+            border: 1px solid #444;
+            padding: 6px 16px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .preset-btn:hover {
+            background-color: #3a3a3a;
+            border-color: #666;
+        }
+        /* 选中时的蓝色高亮状态 */
+        .preset-btn.active {
+            background-color: #0056b3;
+            border-color: #007bff;
+            color: #fff;
+        }
+        .field-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .field-controls input {
+            background-color: #0f0f0f;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            flex: 1 1 auto;
+            min-width: 120px;
+            height: 34px;
+            width: 100%;
+        }
+        .field-controls input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .field-controls .btn {
+            flex-shrink: 0;
+            height: 34px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #333;
+            margin: 15px 0 5px 0;
+        }
+        .search-filter {
+            margin-bottom: 10px;
+        }
+        .search-filter input {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #0f0f0f;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            height: 34px;
+        }
+        
+        /* 移动端适配修复 */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .field-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .field-controls input {
+                width: 100%;
+                flex: unset;
+                min-width: unset;
+            }
+            .field-controls .btn {
+                width: 100%;
+                height: 40px;
+            }
+            .search-filter input { height: 40px; }
+            .preset-buttons {
+                gap: 6px;
+            }
+            .preset-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Nhentai 查询配置器</h1>
+
+    <div class="result-area">
+        <div class="result-header">
+            <span>配置结果</span>
+            <div>
+                <button class="btn btn-danger" onclick="clearResult()">清空</button>
+                <button class="btn btn-primary" onclick="copyResult()">复制</button>
+            </div>
+        </div>
+        <textarea id="search_result" placeholder="配置的结果将出现在这里..."></textarea>
+    </div>
+
+    <div id="fields_container">
+        <!-- 动态由 JS 插入 -->
+    </div>
+</div>
+
+<script>
+    const CONFIG_FILES = [
+        'tag', 'language', 'artist', 'parody', 'character', 'group', 
+        'category', 'pages', 'favorites', 'uploaded', 'title', 'jtitle'
+    ];
+
+    let loadedConfigs = {};
+    let resultArea = document.getElementById('search_result');
+    const RAW_VALUE_FIELDS = ['pages', 'favorites', 'uploaded'];
+
+    let activeFilters = {};
+    let customDynamicTags = [];
+
+    async function loadConfigs() {
+        const fetchPromises = CONFIG_FILES.map(async (name) => {
+            try {
+                const res = await fetch(`${name}.json`);
+                if (res.ok) {
+                    const json = await res.json();
+                    loadedConfigs[name] = json;
+                } else {
+                    loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
+                }
+            } catch (e) {
+                loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
+            }
+        });
+        await Promise.all(fetchPromises);
+
+        CONFIG_FILES.forEach(key => {
+            activeFilters[key] = new Set();
+        });
+
+        renderFields();
+        updateResultDisplay();
+    }
+
+    function updateResultDisplay() {
+        let resultParts = [];
+        
+        CONFIG_FILES.forEach(key => {
+            const values = Array.from(activeFilters[key] || []);
+            if (values.length === 0) return;
+
+            values.forEach(val => {
+                if (RAW_VALUE_FIELDS.includes(key)) {
+                    resultParts.push(`${key}:${val}`);
+                } else {
+                    resultParts.push(`${key}:"${val}"`);
+                }
+            });
+        });
+
+        resultArea.value = resultParts.join(' ');
+        refreshButtonStates();
+    }
+
+    function refreshButtonStates() {
+        const activeTagValues = activeFilters['tag'] || new Set();
+        const activeLangValues = activeFilters['language'] || new Set();
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            const field = btn.dataset.field;
+            const val = btn.dataset.value;
+            if (!field || !val) return;
+
+            let isActive = false;
+            if (field === 'tag') {
+                isActive = activeTagValues.has(val);
+            } else if (field === 'language') {
+                isActive = activeLangValues.has(val);
+            }
+
+            if (isActive) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function toggleFilter(field, value, isUnique = false) {
+        if (!field || !value) return;
+        const currentSet = activeFilters[field];
+        if (!currentSet) return;
+
+        if (isUnique) {
+            currentSet.clear();
+            currentSet.add(value);
+        } else {
+            if (currentSet.has(value)) {
+                currentSet.delete(value);
+            } else {
+                currentSet.add(value);
+            }
+        }
+        updateResultDisplay();
+    }
+
+    function addTagDirectly() {
+        const input = document.getElementById('tag_custom_input');
+        const val = input.value.trim();
+        if (!val) return;
+
+        if (activeFilters['tag'].has(val)) {
+            alert(`"${val}" 已经在配置器中了！`);
+            input.value = '';
+            return;
+        }
+
+        activeFilters['tag'].add(val);
+
+        const exists = customDynamicTags.some(item => item.value === val);
+        if (!exists) {
+            customDynamicTags.push({ label: val, value: val });
+        }
+
+        renderTagButtons();
+        updateResultDisplay();
+        input.value = '';
+    }
+
+    // ---------- 渲染 UI ----------
+    function renderFields() {
+        const container = document.getElementById('fields_container');
+        container.innerHTML = '';
+
+        CONFIG_FILES.forEach(fieldName => {
+            const config = loadedConfigs[fieldName];
+            if (!config) return;
+
+            const group = document.createElement('div');
+            group.className = 'field-group';
+            group.innerHTML = `<div class="field-title"><h3>${config.label || fieldName}</h3></div>`;
+
+            if (fieldName === 'tag') {
+                // 搜索框
+                const searchDiv = document.createElement('div');
+                searchDiv.className = 'search-filter';
+                searchDiv.innerHTML = `<input type="text" id="tag_search_input" placeholder="搜索预设标签..." oninput="filterTagButtons()">`;
+                group.appendChild(searchDiv);
+
+                // 预设+自定义 按钮区
+                const presetsDiv = document.createElement('div');
+                presetsDiv.id = 'tag_presets_container';
+                presetsDiv.className = 'preset-buttons';
+                group.appendChild(presetsDiv);
+
+                // 分割线
+                const divider = document.createElement('div');
+                divider.className = 'divider';
+                group.appendChild(divider);
+
+                // 自定义输入框
+                const customDiv = document.createElement('div');
+                customDiv.className = 'field-controls';
+                customDiv.innerHTML = `
+                    <input type="text" id="tag_custom_input" placeholder="直接输入 Tag 英文..." onkeydown="if(event.key==='Enter') addTagDirectly()">
+                    <button class="btn btn-primary" onclick="addTagDirectly()">添加标签</button>
+                `;
+                group.appendChild(customDiv);
+
+            } else {
+                // 常规字段渲染
+                if (config.items && config.items.length > 0) {
+                    const presetsDiv = document.createElement('div');
+                    presetsDiv.className = 'preset-buttons';
+                    const isUnique = (fieldName === 'language'); 
+                    
+                    config.items.forEach(item => {
+                        const btn = document.createElement('button');
+                        btn.className = 'preset-btn';
+                        btn.innerText = item.label;
+                        btn.dataset.field = fieldName;
+                        btn.dataset.value = item.value;
+                        btn.onclick = () => toggleFilter(fieldName, item.value, isUnique);
+                        presetsDiv.appendChild(btn);
+                    });
+                    group.appendChild(presetsDiv);
+                }
+
+                // 自定义输入框
+                const customDiv = document.createElement('div');
+                customDiv.className = 'field-controls';
+                const placeholder = config.placeholder || `输入 ${config.label}...`;
+                const inputId = `input_${fieldName}`;
+                customDiv.innerHTML = `
+                    <input type="text" id="${inputId}" placeholder="${placeholder}" onkeydown="if(event.key==='Enter') addCustomField('${fieldName}')">
+                    <button class="btn" onclick="addCustomField('${fieldName}')">添加</button>
+                `;
+                group.appendChild(customDiv);
+            }
+
+            container.appendChild(group);
+        });
+
+        // 【修复点】：确保所有 DOM 节点都挂载到页面上之后，再渲染 Tag 预设按钮
+        renderTagButtons();
+        filterTagButtons();
+        refreshButtonStates();
+    }
+
+    function renderTagButtons() {
+        const container = document.getElementById('tag_presets_container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const config = loadedConfigs['tag'];
+        if (!config || !config.items) return;
+
+        config.items.forEach(item => {
+            const btn = createTagButton(item.label, item.value);
+            container.appendChild(btn);
+        });
+
+        customDynamicTags.forEach(item => {
+            const btn = createTagButton(item.label, item.value);
+            container.appendChild(btn);
+        });
+    }
+
+    function createTagButton(label, value) {
+        const btn = document.createElement('button');
+        btn.className = 'preset-btn';
+        btn.innerText = label;
+        btn.dataset.field = 'tag';
+        btn.dataset.value = value;
+        btn.onclick = () => toggleFilter('tag', value, false);
+        return btn;
+    }
+
+    function addCustomField(fieldName) {
+        const input = document.getElementById(`input_${fieldName}`);
+        if (!input) return;
+        const val = input.value.trim();
+        if (!val) return;
+        
+        const isUnique = (fieldName === 'language');
+        const currentSet = activeFilters[fieldName];
+        if (isUnique) {
+            currentSet.clear();
+            currentSet.add(val);
+        } else {
+            if (currentSet.has(val)) {
+                alert(`"${val}" 已经在配置器中了！`);
+                input.value = '';
+                return;
+            }
+            currentSet.add(val);
+        }
+        updateResultDisplay();
+        input.value = '';
+    }
+
+    function filterTagButtons() {
+        const searchVal = document.getElementById('tag_search_input').value.toLowerCase();
+        const container = document.getElementById('tag_presets_container');
+        if (!container) return;
+
+        const btns = container.querySelectorAll('.preset-btn');
+        btns.forEach(btn => {
+            const text = btn.innerText.toLowerCase();
+            btn.style.display = text.includes(searchVal) ? 'inline-block' : 'none';
+        });
+    }
+
+    // ---------- 辅助工具 ----------
+    function clearResult() {
+        CONFIG_FILES.forEach(key => {
+            activeFilters[key] = new Set();
+        });
+        customDynamicTags = [];
+        updateResultDisplay();
+        renderTagButtons();
+    }
+
+    function copyResult() {
+        if (resultArea.value.trim() === '') {
+            alert('当前结果为空白');
+            return;
+        }
+        resultArea.select();
+        document.execCommand('copy');
+        alert('已复制到剪贴板！');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadConfigs);
+</script>
+</body>
+</html>

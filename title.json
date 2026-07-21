@@ -1,0 +1,6 @@
+{
+  "field": "title",
+  "label": "标题搜索",
+  "type": "string",
+  "items": []
+}

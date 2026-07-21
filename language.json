@@ -1,0 +1,11 @@
+{
+  "field": "language",
+  "label": "语言",
+  "type": "string",
+  "items": [
+    {"value": "chinese", "label": "中文"},
+    {"value": "japanese", "label": "日文"},
+    {"value": "english", "label": "英文"},
+    {"value": "translated", "label": "translated"}
+  ]
+}

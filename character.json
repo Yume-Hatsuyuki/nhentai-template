@@ -1,0 +1,6 @@
+{
+  "field": "character",
+  "label": "角色",
+  "type": "string",
+  "items": []
+}
