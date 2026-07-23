@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Nhentai 查询配置器</title>
+    <title>Nhentai Tag 组合器</title>
     <style>
         body {
             background-color: #121212;
@@ -13,7 +13,9 @@
             padding: 15px;
             box-sizing: border-box;
         }
-        *, *::before, *::after {
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
         }
         .container {
@@ -99,29 +101,31 @@
             font-size: 16px;
             font-weight: 500;
         }
-        .preset-buttons {
+        .scrollable-presets {
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 6px;
+            margin-top: 10px;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 10px;
-            max-height: 220px;
-            overflow-y: auto;
-            padding-right: 4px;
             align-content: flex-start;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #1a1a1a;
         }
-        .preset-buttons::-webkit-scrollbar {
-            width: 8px;
+        .scrollable-presets::-webkit-scrollbar {
+            width: 5px;
         }
-        .preset-buttons::-webkit-scrollbar-track {
+        .scrollable-presets::-webkit-scrollbar-track {
             background: #1a1a1a;
             border-radius: 4px;
         }
-        .preset-buttons::-webkit-scrollbar-thumb {
+        .scrollable-presets::-webkit-scrollbar-thumb {
             background: #444;
             border-radius: 4px;
         }
-        .preset-buttons::-webkit-scrollbar-thumb:hover {
-            background: #666;
+        .scrollable-presets::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
         .preset-btn {
             background-color: #2a2a2a;
@@ -132,12 +136,13 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s ease;
+            user-select: none;
+            flex-shrink: 0;
         }
         .preset-btn:hover {
             background-color: #3a3a3a;
             border-color: #666;
         }
-        /* 选中时的蓝色高亮状态 */
         .preset-btn.active {
             background-color: #0056b3;
             border-color: #007bff;
@@ -175,7 +180,7 @@
             margin: 15px 0 5px 0;
         }
         .search-filter {
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         .search-filter input {
             width: 100%;
@@ -186,11 +191,36 @@
             padding: 8px 12px;
             border-radius: 4px;
             height: 34px;
+            font-size: 13px;
         }
-        
-        /* 移动端适配修复 */
+        .search-filter input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2a2a2a;
+            color: #eee;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+
         @media (max-width: 600px) {
-            body { padding: 10px; }
+            body {
+                padding: 10px;
+            }
             .field-controls {
                 flex-direction: column;
                 align-items: stretch;
@@ -204,325 +234,452 @@
                 width: 100%;
                 height: 40px;
             }
-            .search-filter input { height: 40px; }
-            .preset-buttons {
-                gap: 6px;
-                max-height: 180px;
+            .search-filter input {
+                height: 40px;
             }
             .preset-btn {
                 padding: 6px 12px;
                 font-size: 12px;
             }
+            .scrollable-presets {
+                max-height: 130px;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Nhentai 查询配置器</h1>
+    <div class="container">
+        <h1>Nhentai 标签组合器</h1>
 
-    <div class="result-area">
-        <div class="result-header">
-            <span>配置结果</span>
-            <div>
-                <button class="btn btn-danger" onclick="clearResult()">清空</button>
-                <button class="btn btn-primary" onclick="copyResult()">复制</button>
+        <div class="result-area">
+            <div class="result-header">
+                <span>组合结果</span>
+                <div>
+                    <button class="btn btn-danger" id="clearResultBtn">清空</button>
+                    <button class="btn btn-primary" id="copyResultBtn">复制</button>
+                </div>
             </div>
+            <textarea id="search_result" placeholder="组合的结果将出现在这里..."></textarea>
         </div>
-        <textarea id="search_result" placeholder="配置的结果将出现在这里..."></textarea>
+
+        <div id="fields_container">
+            <!-- 动态由 JS 插入 -->
+        </div>
     </div>
 
-    <div id="fields_container">
-        <!-- 动态由 JS 插入 -->
-    </div>
-</div>
+    <div id="toast" class="toast"></div>
 
-<script>
-    const CONFIG_FILES = [
-        'tag', 'language', 'artist', 'parody', 'character', 'group', 
-        'category', 'pages', 'favorites', 'uploaded', 'title', 'jtitle'
-    ];
+    <script>
+        // ==================== 配置 ====================
+        const CONFIG_FILES = [
+            'tag', 'language', 'artist', 'parody', 'character', 'group',
+            'category', 'pages', 'favorites', 'uploaded', 'title', 'jtitle'
+        ];
+        const UNIQUE_FIELDS = ['language', 'category'];
+        const RAW_VALUE_FIELDS = ['pages', 'favorites', 'uploaded'];
 
-    let loadedConfigs = {};
-    let resultArea = document.getElementById('search_result');
-    const RAW_VALUE_FIELDS = ['pages', 'favorites', 'uploaded'];
+        // ==================== 状态 ====================
+        const loadedConfigs = {};
+        const activeFilters = {};
+        let customDynamicTags = [];
 
-    let activeFilters = {};
-    let customDynamicTags = [];
+        // ==================== DOM 引用 ====================
+        const resultArea = document.getElementById('search_result');
+        const toastEl = document.getElementById('toast');
+        let toastTimer = null;
 
-    async function loadConfigs() {
-        const fetchPromises = CONFIG_FILES.map(async (name) => {
+        // ==================== Toast 提示 ====================
+        function showToast(msg) {
+            if (!toastEl) return;
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+        }
+
+        // ==================== 工具函数 ====================
+        function getContainer(field) {
+            return field === 'tag'
+                ? document.getElementById('tag_presets_container')
+                : document.getElementById(`presets_${field}`);
+        }
+
+        // 安全复制（兼容旧浏览器）
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
             try {
-                const res = await fetch(`${name}.json`);
-                if (res.ok) {
-                    const json = await res.json();
-                    loadedConfigs[name] = json;
-                } else {
-                    loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
-                }
-            } catch (e) {
-                loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
+                document.execCommand('copy');
+                showToast('已复制到剪贴板 ✓');
+            } catch (_) {
+                showToast('复制失败，请手动复制');
             }
-        });
-        await Promise.all(fetchPromises);
+            document.body.removeChild(ta);
+        }
 
-        CONFIG_FILES.forEach(key => {
-            activeFilters[key] = new Set();
-        });
+        // ==================== 核心逻辑 ====================
+        function updateResultDisplay() {
+            const parts = [];
 
-        renderFields();
-        updateResultDisplay();
-    }
+            CONFIG_FILES.forEach(key => {
+                const values = Array.from(activeFilters[key] || []);
+                if (values.length === 0) return;
 
-    function updateResultDisplay() {
-        let resultParts = [];
-        
-        CONFIG_FILES.forEach(key => {
-            const values = Array.from(activeFilters[key] || []);
-            if (values.length === 0) return;
+                values.forEach(val => {
+                    if (RAW_VALUE_FIELDS.includes(key)) {
+                        parts.push(`${key}:${val}`);
+                    } else {
+                        parts.push(`${key}:"${val}"`);
+                    }
+                });
+            });
 
-            values.forEach(val => {
-                if (RAW_VALUE_FIELDS.includes(key)) {
-                    resultParts.push(`${key}:${val}`);
-                } else {
-                    resultParts.push(`${key}:"${val}"`);
+            resultArea.value = parts.join(' ');
+            refreshButtonStates();
+        }
+
+        function refreshButtonStates() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                const field = btn.dataset.field;
+                const val = btn.dataset.value;
+                const set = activeFilters[field];
+                if (set) {
+                    btn.classList.toggle('active', set.has(val));
                 }
             });
-        });
-
-        resultArea.value = resultParts.join(' ');
-        refreshButtonStates();
-    }
-
-    function refreshButtonStates() {
-        const activeTagValues = activeFilters['tag'] || new Set();
-        const activeLangValues = activeFilters['language'] || new Set();
-
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            const field = btn.dataset.field;
-            const val = btn.dataset.value;
-            if (!field || !val) return;
-
-            let isActive = false;
-            if (field === 'tag') {
-                isActive = activeTagValues.has(val);
-            } else if (field === 'language') {
-                isActive = activeLangValues.has(val);
-            }
-
-            if (isActive) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-    }
-
-    function toggleFilter(field, value, isUnique = false) {
-        if (!field || !value) return;
-        const currentSet = activeFilters[field];
-        if (!currentSet) return;
-
-        if (isUnique) {
-            currentSet.clear();
-            currentSet.add(value);
-        } else {
-            if (currentSet.has(value)) {
-                currentSet.delete(value);
-            } else {
-                currentSet.add(value);
-            }
-        }
-        updateResultDisplay();
-    }
-
-    function addTagDirectly() {
-        const input = document.getElementById('tag_custom_input');
-        const val = input.value.trim();
-        if (!val) return;
-
-        if (activeFilters['tag'].has(val)) {
-            alert(`"${val}" 已经在配置器中了！`);
-            input.value = '';
-            return;
         }
 
-        activeFilters['tag'].add(val);
+        // 通用排序：激活的按钮排在前面，其余按 data-order 升序
+        function sortPresetButtons(field) {
+            const container = getContainer(field);
+            if (!container) return;
 
-        const exists = customDynamicTags.some(item => item.value === val);
-        if (!exists) {
-            customDynamicTags.push({ label: val, value: val });
+            const items = Array.from(container.children);
+            const set = activeFilters[field] || new Set();
+
+            items.sort((a, b) => {
+                const aActive = set.has(a.dataset.value) ? 0 : 1;
+                const bActive = set.has(b.dataset.value) ? 0 : 1;
+                if (aActive !== bActive) return aActive - bActive;
+                return (Number(a.dataset.order) || 0) - (Number(b.dataset.order) || 0);
+            });
+
+            items.forEach(item => container.appendChild(item));
         }
 
-        renderTagButtons();
-        updateResultDisplay();
-        input.value = '';
-    }
+        function toggleFilter(field, value, isUnique = false) {
+            const set = activeFilters[field];
+            if (!set) return;
 
-    // ---------- 渲染 UI ----------
-    function renderFields() {
-        const container = document.getElementById('fields_container');
-        container.innerHTML = '';
-
-        CONFIG_FILES.forEach(fieldName => {
-            const config = loadedConfigs[fieldName];
-            if (!config) return;
-
-            const group = document.createElement('div');
-            group.className = 'field-group';
-            group.innerHTML = `<div class="field-title"><h3>${config.label || fieldName}</h3></div>`;
-
-            if (fieldName === 'tag') {
-                // 搜索框
-                const searchDiv = document.createElement('div');
-                searchDiv.className = 'search-filter';
-                searchDiv.innerHTML = `<input type="text" id="tag_search_input" placeholder="搜索预设标签..." oninput="filterTagButtons()">`;
-                group.appendChild(searchDiv);
-
-                // 预设+自定义 按钮区
-                const presetsDiv = document.createElement('div');
-                presetsDiv.id = 'tag_presets_container';
-                presetsDiv.className = 'preset-buttons';
-                group.appendChild(presetsDiv);
-
-                // 分割线
-                const divider = document.createElement('div');
-                divider.className = 'divider';
-                group.appendChild(divider);
-
-                // 自定义输入框
-                const customDiv = document.createElement('div');
-                customDiv.className = 'field-controls';
-                customDiv.innerHTML = `
-                    <input type="text" id="tag_custom_input" placeholder="直接输入 Tag 英文..." onkeydown="if(event.key==='Enter') addTagDirectly()">
-                    <button class="btn btn-primary" onclick="addTagDirectly()">添加标签</button>
-                `;
-                group.appendChild(customDiv);
-
+            if (isUnique) {
+                set.clear();
+                set.add(value);
             } else {
-                // 常规字段渲染
-                if (config.items && config.items.length > 0) {
-                    const presetsDiv = document.createElement('div');
-                    presetsDiv.className = 'preset-buttons';
-                    const isUnique = (fieldName === 'language'); 
-                    
-                    config.items.forEach(item => {
-                        const btn = document.createElement('button');
-                        btn.className = 'preset-btn';
-                        btn.innerText = item.label;
-                        btn.dataset.field = fieldName;
-                        btn.dataset.value = item.value;
-                        btn.onclick = () => toggleFilter(fieldName, item.value, isUnique);
-                        presetsDiv.appendChild(btn);
-                    });
-                    group.appendChild(presetsDiv);
+                if (set.has(value)) {
+                    set.delete(value);
+                } else {
+                    set.add(value);
                 }
-
-                // 自定义输入框
-                const customDiv = document.createElement('div');
-                customDiv.className = 'field-controls';
-                const placeholder = config.placeholder || `输入 ${config.label}...`;
-                const inputId = `input_${fieldName}`;
-                customDiv.innerHTML = `
-                    <input type="text" id="${inputId}" placeholder="${placeholder}" onkeydown="if(event.key==='Enter') addCustomField('${fieldName}')">
-                    <button class="btn" onclick="addCustomField('${fieldName}')">添加</button>
-                `;
-                group.appendChild(customDiv);
             }
 
-            container.appendChild(group);
-        });
+            sortPresetButtons(field);
+            updateResultDisplay();
+        }
 
-        // 【修复点】：确保所有 DOM 节点都挂载到页面上之后，再渲染 Tag 预设按钮
-        renderTagButtons();
-        filterTagButtons();
-        refreshButtonStates();
-    }
+        // ==================== Tag 相关 ====================
+        function renderTagButtons() {
+            const container = document.getElementById('tag_presets_container');
+            if (!container) return;
+            container.innerHTML = '';
 
-    function renderTagButtons() {
-        const container = document.getElementById('tag_presets_container');
-        if (!container) return;
-        container.innerHTML = '';
+            const config = loadedConfigs['tag'];
+            const items = config?.items || [];
 
-        const config = loadedConfigs['tag'];
-        if (!config || !config.items) return;
+            items.forEach((item, index) => {
+                const btn = createPresetButton('tag', item.label, item.value, index);
+                container.appendChild(btn);
+            });
 
-        config.items.forEach(item => {
-            const btn = createTagButton(item.label, item.value);
-            container.appendChild(btn);
-        });
+            customDynamicTags.forEach((item, index) => {
+                const btn = createPresetButton('tag', item.label, item.value, 100000 + index);
+                container.appendChild(btn);
+            });
+        }
 
-        customDynamicTags.forEach(item => {
-            const btn = createTagButton(item.label, item.value);
-            container.appendChild(btn);
-        });
-    }
+        function createPresetButton(field, label, value, order) {
+            const btn = document.createElement('button');
+            btn.className = 'preset-btn';
+            btn.textContent = label;
+            btn.dataset.field = field;
+            btn.dataset.value = value;
+            btn.dataset.order = order;
+            btn.addEventListener('click', () => {
+                const isUnique = UNIQUE_FIELDS.includes(field);
+                toggleFilter(field, value, isUnique);
+            });
+            return btn;
+        }
 
-    function createTagButton(label, value) {
-        const btn = document.createElement('button');
-        btn.className = 'preset-btn';
-        btn.innerText = label;
-        btn.dataset.field = 'tag';
-        btn.dataset.value = value;
-        btn.onclick = () => toggleFilter('tag', value, false);
-        return btn;
-    }
+        function addTagDirectly() {
+            const input = document.getElementById('tag_custom_input');
+            const val = input.value.trim();
+            if (!val) {
+                showToast('请输入标签内容');
+                return;
+            }
 
-    function addCustomField(fieldName) {
-        const input = document.getElementById(`input_${fieldName}`);
-        if (!input) return;
-        const val = input.value.trim();
-        if (!val) return;
-        
-        const isUnique = (fieldName === 'language');
-        const currentSet = activeFilters[fieldName];
-        if (isUnique) {
-            currentSet.clear();
-            currentSet.add(val);
-        } else {
-            if (currentSet.has(val)) {
-                alert(`"${val}" 已经在配置器中了！`);
+            if (activeFilters['tag'].has(val)) {
+                showToast(`"${val}" 已在组合中`);
                 input.value = '';
                 return;
             }
-            currentSet.add(val);
+
+            activeFilters['tag'].add(val);
+
+            if (!customDynamicTags.some(item => item.value === val)) {
+                customDynamicTags.push({ label: val, value: val });
+            }
+
+            renderTagButtons();
+            filterTagButtons();
+            sortPresetButtons('tag');
+            updateResultDisplay();
+            input.value = '';
+            showToast(`已添加: ${val}`);
         }
-        updateResultDisplay();
-        input.value = '';
-    }
 
-    function filterTagButtons() {
-        const searchVal = document.getElementById('tag_search_input').value.toLowerCase();
-        const container = document.getElementById('tag_presets_container');
-        if (!container) return;
+        function filterTagButtons() {
+            const input = document.getElementById('tag_search_input');
+            const keyword = input?.value?.toLowerCase() || '';
+            const container = document.getElementById('tag_presets_container');
+            if (!container) return;
 
-        const btns = container.querySelectorAll('.preset-btn');
-        btns.forEach(btn => {
-            const text = btn.innerText.toLowerCase();
-            btn.style.display = text.includes(searchVal) ? 'inline-block' : 'none';
-        });
-    }
-
-    // ---------- 辅助工具 ----------
-    function clearResult() {
-        CONFIG_FILES.forEach(key => {
-            activeFilters[key] = new Set();
-        });
-        customDynamicTags = [];
-        updateResultDisplay();
-        renderTagButtons();
-    }
-
-    function copyResult() {
-        if (resultArea.value.trim() === '') {
-            alert('当前结果为空白');
-            return;
+            container.querySelectorAll('.preset-btn').forEach(btn => {
+                const text = btn.textContent.toLowerCase();
+                btn.style.display = text.includes(keyword) ? 'inline-block' : 'none';
+            });
         }
-        resultArea.select();
-        document.execCommand('copy');
-        alert('已复制到剪贴板！');
-    }
 
-    document.addEventListener('DOMContentLoaded', loadConfigs);
-</script>
+        // ==================== 通用字段（非 Tag） ====================
+        function addCustomField(fieldName) {
+            const input = document.getElementById(`input_${fieldName}`);
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) {
+                showToast('请输入内容');
+                return;
+            }
+
+            const set = activeFilters[fieldName];
+            const isUnique = UNIQUE_FIELDS.includes(fieldName);
+
+            if (isUnique) {
+                set.clear();
+                set.add(val);
+            } else {
+                if (set.has(val)) {
+                    showToast(`"${val}" 已在组合中`);
+                    input.value = '';
+                    return;
+                }
+                set.add(val);
+            }
+
+            sortPresetButtons(fieldName);
+            updateResultDisplay();
+            input.value = '';
+            showToast(`已添加: ${val}`);
+        }
+
+        function filterFieldButtons(fieldName) {
+            const input = document.getElementById(`search_${fieldName}`);
+            const keyword = input?.value?.toLowerCase() || '';
+            const container = document.getElementById(`presets_${fieldName}`);
+            if (!container) return;
+
+            container.querySelectorAll('.preset-btn').forEach(btn => {
+                const text = btn.textContent.toLowerCase();
+                btn.style.display = text.includes(keyword) ? 'inline-block' : 'none';
+            });
+        }
+
+        // ==================== 渲染所有字段 ====================
+        function renderFields() {
+            const container = document.getElementById('fields_container');
+            container.innerHTML = '';
+
+            CONFIG_FILES.forEach(fieldName => {
+                const config = loadedConfigs[fieldName];
+                if (!config) return;
+
+                const group = document.createElement('div');
+                group.className = 'field-group';
+
+                // 标题
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'field-title';
+                const titleH3 = document.createElement('h3');
+                titleH3.textContent = config.label || fieldName;
+                titleDiv.appendChild(titleH3);
+                group.appendChild(titleDiv);
+
+                const isTag = fieldName === 'tag';
+
+                // ---------- 搜索框 ----------
+                const searchDiv = document.createElement('div');
+                searchDiv.className = 'search-filter';
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.id = isTag ? 'tag_search_input' : `search_${fieldName}`;
+                searchInput.placeholder = `搜索 ${config.label}...`;
+                searchInput.addEventListener('input', () => {
+                    if (isTag) {
+                        filterTagButtons();
+                    } else {
+                        filterFieldButtons(fieldName);
+                    }
+                });
+                searchDiv.appendChild(searchInput);
+                group.appendChild(searchDiv);
+
+                // ---------- 预设按钮（带滚动） ----------
+                const presetsDiv = document.createElement('div');
+                presetsDiv.id = isTag ? 'tag_presets_container' : `presets_${fieldName}`;
+                presetsDiv.className = 'scrollable-presets';
+
+                if (!isTag && config.items) {
+                    config.items.forEach((item, index) => {
+                        const btn = createPresetButton(fieldName, item.label, item.value, index);
+                        presetsDiv.appendChild(btn);
+                    });
+                }
+
+                group.appendChild(presetsDiv);
+
+                // ---------- 自定义输入 ----------
+                if (isTag) {
+                    const divider = document.createElement('div');
+                    divider.className = 'divider';
+                    group.appendChild(divider);
+                }
+
+                const customDiv = document.createElement('div');
+                customDiv.className = 'field-controls';
+
+                const customInput = document.createElement('input');
+                customInput.type = 'text';
+                customInput.id = isTag ? 'tag_custom_input' : `input_${fieldName}`;
+                customInput.placeholder = config.placeholder || `输入 ${config.label}...`;
+                customInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        if (isTag) {
+                            addTagDirectly();
+                        } else {
+                            addCustomField(fieldName);
+                        }
+                    }
+                });
+
+                const customBtn = document.createElement('button');
+                customBtn.className = isTag ? 'btn btn-primary' : 'btn';
+                customBtn.textContent = isTag ? '添加标签' : '添加';
+                customBtn.addEventListener('click', () => {
+                    if (isTag) {
+                        addTagDirectly();
+                    } else {
+                        addCustomField(fieldName);
+                    }
+                });
+
+                customDiv.appendChild(customInput);
+                customDiv.appendChild(customBtn);
+                group.appendChild(customDiv);
+
+                container.appendChild(group);
+            });
+
+            // 渲染 Tag 预设（单独处理，因为要包含 customDynamicTags）
+            renderTagButtons();
+            filterTagButtons();
+
+            // 所有字段排序一次
+            CONFIG_FILES.forEach(key => sortPresetButtons(key));
+            refreshButtonStates();
+        }
+
+        // ==================== 清空 & 复制 ====================
+        function clearAll() {
+            CONFIG_FILES.forEach(key => {
+                activeFilters[key] = new Set();
+            });
+            customDynamicTags = [];
+            // 清空搜索框
+            document.querySelectorAll('.search-filter input').forEach(el => el.value = '');
+            renderTagButtons();
+            filterTagButtons();
+            CONFIG_FILES.forEach(key => {
+                if (key !== 'tag') filterFieldButtons(key);
+                sortPresetButtons(key);
+            });
+            updateResultDisplay();
+            showToast('已清空所有标签');
+        }
+
+        function copyResult() {
+            const text = resultArea.value.trim();
+            if (!text) {
+                showToast('当前结果为空白');
+                return;
+            }
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast('已复制到剪贴板 ✓'))
+                    .catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        // ==================== 初始化加载配置 ====================
+        async function loadConfigs() {
+            const ts = Date.now();
+            const fetchPromises = CONFIG_FILES.map(async (name) => {
+                try {
+                    const res = await fetch(`${name}.json?t=${ts}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        loadedConfigs[name] = await res.json();
+                    } else {
+                        loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
+                    }
+                } catch (_) {
+                    loadedConfigs[name] = { field: name, label: name, items: [], placeholder: `输入 ${name}...` };
+                }
+            });
+
+            await Promise.all(fetchPromises);
+
+            CONFIG_FILES.forEach(key => {
+                activeFilters[key] = new Set();
+            });
+
+            renderFields();
+            showToast('已加载最新配置 ✓');
+        }
+
+        // ==================== 事件绑定 ====================
+        document.addEventListener('DOMContentLoaded', loadConfigs);
+        document.getElementById('clearResultBtn').addEventListener('click', clearAll);
+        document.getElementById('copyResultBtn').addEventListener('click', copyResult);
+
+        // 额外：点击 toast 可手动关闭（提升体验）
+        toastEl?.addEventListener('click', () => {
+            toastEl.classList.remove('show');
+            clearTimeout(toastTimer);
+        });
+    </script>
 </body>
 </html>

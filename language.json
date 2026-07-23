@@ -3,9 +3,341 @@
   "label": "语言",
   "type": "string",
   "items": [
-    {"value": "chinese", "label": "中文"},
-    {"value": "japanese", "label": "日文"},
-    {"value": "english", "label": "英文"},
-    {"value": "translated", "label": "translated"}
+    {
+      "value": "afrikaans",
+      "label": "南非荷兰语"
+    },
+    {
+      "value": "albanian",
+      "label": "阿尔巴尼亚语"
+    },
+    {
+      "value": "arabic",
+      "label": "阿拉伯语"
+    },
+    {
+      "value": "aramaic",
+      "label": "阿拉姆语"
+    },
+    {
+      "value": "armenian",
+      "label": "亚美尼亚语"
+    },
+    {
+      "value": "bengali",
+      "label": "孟加拉语"
+    },
+    {
+      "value": "bosnian",
+      "label": "波斯尼亚语"
+    },
+    {
+      "value": "bulgarian",
+      "label": "保加利亚语"
+    },
+    {
+      "value": "burmese",
+      "label": "缅甸语"
+    },
+    {
+      "value": "catalan",
+      "label": "加泰罗尼亚语"
+    },
+    {
+      "value": "cebuano",
+      "label": "宿务语"
+    },
+    {
+      "value": "chinese",
+      "label": "中文"
+    },
+    {
+      "value": "cree",
+      "label": "克里语"
+    },
+    {
+      "value": "creole",
+      "label": "克里奥尔语"
+    },
+    {
+      "value": "croatian",
+      "label": "克罗地亚语"
+    },
+    {
+      "value": "czech",
+      "label": "捷克语"
+    },
+    {
+      "value": "danish",
+      "label": "丹麦语"
+    },
+    {
+      "value": "dutch",
+      "label": "荷兰语"
+    },
+    {
+      "value": "english",
+      "label": "英文"
+    },
+    {
+      "value": "esperanto",
+      "label": "世界语"
+    },
+    {
+      "value": "estonian",
+      "label": "爱沙尼亚语"
+    },
+    {
+      "value": "finnish",
+      "label": "芬兰语"
+    },
+    {
+      "value": "french",
+      "label": "法语"
+    },
+    {
+      "value": "georgian",
+      "label": "格鲁吉亚语"
+    },
+    {
+      "value": "german",
+      "label": "德语"
+    },
+    {
+      "value": "greek",
+      "label": "希腊语"
+    },
+    {
+      "value": "gujarati",
+      "label": "古吉拉特语"
+    },
+    {
+      "value": "hebrew",
+      "label": "希伯来语"
+    },
+    {
+      "value": "hindi",
+      "label": "印地语"
+    },
+    {
+      "value": "hmong",
+      "label": "苗语"
+    },
+    {
+      "value": "hungarian",
+      "label": "匈牙利语"
+    },
+    {
+      "value": "icelandic",
+      "label": "冰岛语"
+    },
+    {
+      "value": "indonesian",
+      "label": "印尼语"
+    },
+    {
+      "value": "irish",
+      "label": "爱尔兰语"
+    },
+    {
+      "value": "italian",
+      "label": "意大利语"
+    },
+    {
+      "value": "japanese",
+      "label": "日文"
+    },
+    {
+      "value": "javanese",
+      "label": "爪哇语"
+    },
+    {
+      "value": "kannada",
+      "label": "卡纳达语"
+    },
+    {
+      "value": "kazakh",
+      "label": "哈萨克语"
+    },
+    {
+      "value": "khmer",
+      "label": "高棉语"
+    },
+    {
+      "value": "korean",
+      "label": "韩语"
+    },
+    {
+      "value": "kurdish",
+      "label": "库尔德语"
+    },
+    {
+      "value": "ladino",
+      "label": "拉迪诺语"
+    },
+    {
+      "value": "lao",
+      "label": "老挝语"
+    },
+    {
+      "value": "latin",
+      "label": "拉丁语"
+    },
+    {
+      "value": "latvian",
+      "label": "拉脱维亚语"
+    },
+    {
+      "value": "marathi",
+      "label": "马拉地语"
+    },
+    {
+      "value": "mongolian",
+      "label": "蒙古语"
+    },
+    {
+      "value": "ndebele",
+      "label": "恩德贝莱语"
+    },
+    {
+      "value": "nepali",
+      "label": "尼泊尔语"
+    },
+    {
+      "value": "norwegian",
+      "label": "挪威语"
+    },
+    {
+      "value": "oromo",
+      "label": "奥罗莫语"
+    },
+    {
+      "value": "papiamento",
+      "label": "帕皮阿门托语"
+    },
+    {
+      "value": "pashto",
+      "label": "普什图语"
+    },
+    {
+      "value": "persian",
+      "label": "波斯语"
+    },
+    {
+      "value": "polish",
+      "label": "波兰语"
+    },
+    {
+      "value": "portuguese",
+      "label": "葡萄牙语"
+    },
+    {
+      "value": "punjabi",
+      "label": "旁遮普语"
+    },
+    {
+      "value": "romanian",
+      "label": "罗马尼亚语"
+    },
+    {
+      "value": "russian",
+      "label": "俄语"
+    },
+    {
+      "value": "sango",
+      "label": "桑戈语"
+    },
+    {
+      "value": "sanskrit",
+      "label": "梵语"
+    },
+    {
+      "value": "serbian",
+      "label": "塞尔维亚语"
+    },
+    {
+      "value": "shona",
+      "label": "绍纳语"
+    },
+    {
+      "value": "slovak",
+      "label": "斯洛伐克语"
+    },
+    {
+      "value": "slovenian",
+      "label": "斯洛文尼亚语"
+    },
+    {
+      "value": "somali",
+      "label": "索马里语"
+    },
+    {
+      "value": "spanish",
+      "label": "西班牙语"
+    },
+    {
+      "value": "swahili",
+      "label": "斯瓦希里语"
+    },
+    {
+      "value": "swedish",
+      "label": "瑞典语"
+    },
+    {
+      "value": "tagalog",
+      "label": "他加禄语"
+    },
+    {
+      "value": "tamil",
+      "label": "泰米尔语"
+    },
+    {
+      "value": "telugu",
+      "label": "泰卢固语"
+    },
+    {
+      "value": "thai",
+      "label": "泰语"
+    },
+    {
+      "value": "tibetan",
+      "label": "藏语"
+    },
+    {
+      "value": "tigrinya",
+      "label": "提格里尼亚语"
+    },
+    {
+      "value": "translated",
+      "label": "translated"
+    },
+    {
+      "value": "turkish",
+      "label": "土耳其语"
+    },
+    {
+      "value": "ukrainian",
+      "label": "乌克兰语"
+    },
+    {
+      "value": "urdu",
+      "label": "乌尔都语"
+    },
+    {
+      "value": "vietnamese",
+      "label": "越南语"
+    },
+    {
+      "value": "welsh",
+      "label": "威尔士语"
+    },
+    {
+      "value": "yiddish",
+      "label": "意第绪语"
+    },
+    {
+      "value": "zulu",
+      "label": "祖鲁语"
+    }
   ]
 }
